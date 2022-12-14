@@ -1,0 +1,30 @@
+{
+  "name": "churchplugins/cp-notification-bars",
+  "type": "wordpress-plugin",
+  "description": "Easy and customizable notification bars",
+  "keywords": [],
+  "homepage": "https://churchplugins.com",
+  "authors": [
+    {
+      "name": "Tanner Moushey",
+      "email": "tanner@churchplugins.com",
+      "homepage": "https://churchplugins.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.0.0",
+    "composer/installers": "*",
+    "wpackio/enqueue": "^3.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "CPNB\\": "includes/",
+      "ChurchPlugins\\": "includes/ChurchPlugins/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true
+    }
+  }
+}
