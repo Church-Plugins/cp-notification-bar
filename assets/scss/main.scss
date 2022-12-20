@@ -1,0 +1,32 @@
+@import '../../includes/ChurchPlugins/assets/scss/vars';
+
+.cp-notification-bar {
+	--cpnb-content-width: 70rem;
+	--cpnb-background: var(--cp-color-ui-primary);
+	--cpnb-color: var(--cp-color-text-inverted);
+	--cpnb-padding: var(--cp-gap-base);
+	--cpnb-line-height: 1.25;
+	
+	background: var(--cpnb-background);
+	color: var(--cpnb-color);
+	padding: calc( var(--cpnb-padding) / 2 ) var(--cpnb-padding);
+	
+	&.cp-clickable {
+		cursor: pointer;
+	}
+	
+	&--content {
+		max-width: var(--cpnb-content-width);
+		margin: auto;
+		text-align: center;
+		display: flex;
+		flex-flow: row wrap;
+		justify-content: center;
+		align-items: center;
+		line-height: var(--cpnb-line-height);
+		
+		> * {
+			padding: calc( var(--cpnb-padding) / 2 ) 1em;
+		}
+	}
+}

@@ -70,8 +70,8 @@ class _Init {
 	}
 
 	public function register_post_types() {
-
 		$this->notification_bars = NotificationBars::get_instance();
+		$this->notification_bars->add_actions();
 		do_action( 'cp_register_post_types' );
 	}
 	

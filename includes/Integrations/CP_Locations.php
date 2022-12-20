@@ -26,7 +26,18 @@ class CP_Locations {
 	 * Add Hooks and Actions
 	 */
 	public function __construct() {
-
+		add_filter( 'cp_notification_bars_args', [ $this, 'location_args' ] );
 	}
 		
+	
+	public function location_args( $args ) {
+		// we are already on a location, let the default query filter handle
+		if ( get_query_var( 'cp_location_id' ) ) {
+			return $args;
+		}
+
+		$args[ cp_locations()->setup->taxonomies->location->taxonomy ] = 'global';
+		
+		return $args;
+	}
 }

@@ -50,7 +50,7 @@ class _Init {
 	 *
 	 */
 	protected function __construct() {
-		$this->enqueue = new \WPackio\Enqueue( 'cpLive', 'dist', $this->get_version(), 'plugin', CPNB_PLUGIN_FILE );
+		$this->enqueue = new \WPackio\Enqueue( 'cpNotificationBars', 'dist', $this->get_version(), 'plugin', CPNB_PLUGIN_FILE );
 		add_action( 'plugins_loaded', [ $this, 'maybe_setup' ], - 9999 );
 		add_action( 'init', [ $this, 'maybe_init' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
@@ -103,14 +103,14 @@ class _Init {
 	protected function includes() {
 		require_once( 'Templates.php' );
 		
-		Admin\_Init::get_instance();
+//		Admin\_Init::get_instance();
 		
 		$this->setup = Setup\_Init::get_instance();
 		$this->integrations = Integrations\_Init::get_instance();
 	}
 	
 	protected function actions() {
-		add_action( 'plugins_loaded', [ $this, 'load_services' ] );
+		add_action( 'wp_body_open', [ $this, 'load_notification_bars' ] );
 	}
 	
 	/**
@@ -124,146 +124,41 @@ class _Init {
 
 	/** Helper Methods **************************************/
 
-	/**
-	 * Determine if any active services are live. Return the id of the first live service found
-	 * 
-	 * @return mixed|void
-	 * @since  1.0.0
-	 *
-	 * @author Tanner Moushey
-	 */
-	public function is_live() {
-		$is_live = false;
+	public function load_notification_bars() {
+		$args = apply_filters( 'cp_notification_bars_args', [
+			'post_type' => $this->setup->post_types->notification_bars->post_type,
+			'posts_per_page' => 1
+		] );
 		
-		foreach( $this->services->active as $id => $service ) {
-			/** @var $service Services\Service */
-			if ( $service->is_live() ) {
-				$is_live = $id;
-				break;	
-			}
+		
+		$bars = get_posts( $args );
+		
+		if ( empty( $bars ) ) {
+			return;
 		}
 		
-		return apply_filters( 'cp_notification_bars_is_live', $is_live );
-	}
+		$bar = $bars[0];
 
-	/**
-	 * Return the live embed for the live service
-	 * 
-	 * @return mixed|void
-	 * @since  1.0.0
-	 *
-	 * @author Tanner Moushey
-	 */
-	public function get_live_embed() {
-		$embed = '';
-		
-		foreach( array_reverse( $this->services->active ) as $service ) {
-			/** @var $service Services\Service */
-			$embed = $service->get_embed();
-
-			if ( $service->is_live() ) {
-				break;	
-			}
+		$has_button = false;
+		$text   = get_post_meta( $bar->ID, 'text', true );
+		$url    = get_post_meta( $bar->ID, 'url', true );
+		if ( $button = get_post_meta( $bar->ID, 'button_text', true ) ) {
+			$has_button = true;
 		}
 		
-		return apply_filters( 'cp_notification_bars_get_live_embed', $embed );		
-	}
-
-	/**
-	 * Check if we are in the window of a schedule to check for a live stream
-	 * 
-	 * @param $schedules
-	 *
-	 * @return bool
-	 * @since  1.0.0
-	 *
-	 * @author Tanner Moushey
-	 */
-	public function schedule_is_now( $schedules = false ) {
-		if ( false === $schedules ) {
-			$schedules = Settings::get( 'schedule_group' );
-		}
-		
-		$day       = strtolower( date( 'l', current_time( 'timestamp' ) ) );
-		$timestamp = current_time( 'timestamp' );
-		$buffer    = Settings::get_advanced( 'buffer_before', 8 ) * MINUTE_IN_SECONDS; // start watching 15 minutes before the start time
-		$duration  = Settings::get_advanced( 'buffer_after', 12 ) * MINUTE_IN_SECONDS; // how long we'll keep checking after the service should have started. Allow for the initial 15 min. 
-
-		if ( empty( $schedules ) ) {
-			return false;
-		}
-
-		foreach ( $schedules as $schedule ) {
-			if ( $day !== $schedule['day'] ) {
-				continue;
-			}
-			
-			if ( empty( $schedule['time'] ) ) {
-				continue;
-			}
-
-			foreach ( $schedule['time'] as $time ) {
-				$start = strtotime( 'today ' . $time, current_time( 'timestamp' ) ) - $buffer;
-				$end   = $start + $duration + $buffer;
-
-				// if we fall in the window, continue with the check
-				if ( $timestamp > $start && $timestamp < $end ) {
-					return true;
-				}
-			}
-		}
-
-		return false;		
-	}
-
-	/**
-	 * Return the next scheduled event
-	 * 
-	 * @param $schedules
-	 *
-	 * @return false|mixed|null
-	 * @since  1.0.0
-	 *
-	 * @author Tanner Moushey
-	 */
-	public function get_next_schedule( $schedules = false ) {
-		if ( false === $schedules ) {
-			$schedules = Settings::get( 'schedule_group' );
-		}
-		
-		$times = [];
-		
-		if ( empty( $schedules ) ) {
-			return false;
-		}
-
-		foreach ( $schedules as $schedule ) {
-			if ( empty( $schedule['time'] ) ) {
-				continue;
-			}
-
-			foreach ( $schedule['time'] as $time ) {
-				$times[] = strtotime( $schedule['day'] . ' ' . $time );
-			}
-		}
-		
-		asort( $times );
-		
-		if ( empty( $times ) ) {
-			return false;
-		}
-		
-		return array_shift( $times ); // - (int) ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+		?>
+		<div class="cp-notification-bar cp-color-primary <?php echo ! $has_button ? 'cp-clickable' : ''; ?>" <?php echo ! $has_button ? 'onclick="window.location.href = \'' . $url . '\'"' : ''; ?>>
+			<div class="cp-notification-bar--content">
+				<div class="cp-notification-bar--text"><?php echo wp_kses_post( $text ); ?></div>
+				
+				<?php if ( $has_button ) : ?>
+					<div class="cp-notification-bar--button"><a class="cp-button" href="<?php echo esc_url( $url ); ?>"><span><?php echo wp_kses_post( $button ); ?></span></a></div>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
 	}
 	
-	public function load_services() {
-		
-	}
-	
-	public function get_default_thumb() {
-		return CPNB_PLUGIN_URL . '/app/public/logo512.png';
-	}
-
 	/**
 	 * Make sure required plugins are active
 	 *
@@ -302,7 +197,7 @@ class _Init {
 	 * @return string the plugin name
 	 */
 	public function get_plugin_name() {
-		return __( 'Church Plugins - Live', 'cp-notification-bars' );
+		return __( 'CP Notification Bars', 'cp-notification-bars' );
 	}
 
 	/**

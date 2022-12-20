@@ -2,8 +2,8 @@
 /**
  * Plugin Name: CP Notification Bars
  * Plugin URL: https://churchplugins.com
- * Description: Automatically detect and show live video feeds.
- * Version: 1.0.2
+ * Description: Easy and customizable notification bars.
+ * Version: 1.0.0
  * Author: Church Plugins
  * Author URI: https://churchplugins.com
  * Text Domain: cp-notification-bars

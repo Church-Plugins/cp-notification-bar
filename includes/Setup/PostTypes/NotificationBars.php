@@ -50,7 +50,7 @@ class NotificationBars extends PostType {
 			return $title;
 		}
 		
-		return __( 'Add notfication bar label', 'cp-notification-bars' );
+		return __( 'Add label', 'cp-notification-bars' );
 	}
 
 	/**
@@ -91,10 +91,11 @@ class NotificationBars extends PostType {
 	 * @author costmo
 	 */
 	public function get_args() {
-		$args               = parent::get_args();
-		$args['menu_icon']  = apply_filters( "{$this->post_type}_icon", 'dashicons-id' );
+		$args                = parent::get_args();
+		$args['menu_icon']   = apply_filters( "{$this->post_type}_icon", 'dashicons-minus' );
 		$args['has_archive'] = false;
-		$args['supports'][] = 'page-attributes';
+		$args['supports']    = [ 'title' ];
+
 		return $args;
 	}
 	
@@ -104,7 +105,7 @@ class NotificationBars extends PostType {
 
 	protected function meta_details() {
 		$cmb = new_cmb2_box( [
-			'id' => 'staff_meta',
+			'id' => 'notification_bar_meta',
 			'title' => $this->single_label . ' ' . __( 'Details', 'cp-notification-bars' ),
 			'object_types' => [ $this->post_type ],
 			'context' => 'normal',
@@ -113,17 +114,36 @@ class NotificationBars extends PostType {
 		] );
 
 		$cmb->add_field( [
-			'name' => __( 'Title', 'cp-notification-bars' ),
-			'desc' => __( 'The title for this staff member.', 'cp-notification-bars' ),
-			'id'   => 'title',
+			'name' => __( 'Text', 'cp-notification-bars' ),
+			'desc' => __( 'The text to show on the notification bar.', 'cp-notification-bars' ),
+			'id'   => 'text',
 			'type' => 'text',
 		] );
 
 		$cmb->add_field( [
-			'name' => __( 'Email', 'cp-notification-bars' ),
-			'desc' => __( 'The email address for this staff member.', 'cp-notification-bars' ),
-			'id'   => 'email',
-			'type' => 'text_email',
+			'name' => __( 'Link', 'cp-notification-bars' ),
+			'desc' => __( 'The link for the button. If no button text is entered, the whole bar will be clickable.', 'cp-notification-bars' ),
+			'id'   => 'url',
+			'type' => 'text_url',
+		] );
+		
+		$cmb->add_field( [
+			'name' => __( 'Button Text', 'cp-notification-bars' ),
+			'desc' => __( 'The text to show for the notification call to button. (Leave blank for no button)', 'cp-notification-bars' ),
+			'id'   => 'button_text',
+			'type' => 'text',
+		] );
+
+	}
+	
+	protected function visibility_options() {
+		$cmb = new_cmb2_box( [
+			'id'           => 'notification_bar_visibility',
+			'title'        => $this->single_label . ' ' . __( 'Display Options', 'cp-notification-bars' ),
+			'object_types' => [ $this->post_type ],
+			'context'      => 'normal',
+			'priority'     => 'high',
+			'show_names'   => true,
 		] );
 	}
 	
