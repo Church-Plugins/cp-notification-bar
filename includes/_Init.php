@@ -21,11 +21,6 @@ class _Init {
 	public $setup;
 
 	/**
-	 * @var Services\_Init
-	 */
-	public $services;
-
-	/**
 	 * @var Integrations\_Init
 	 */
 	public $integrations;
@@ -102,63 +97,54 @@ class _Init {
 	 */
 	protected function includes() {
 		require_once( 'Templates.php' );
-		
+
 //		Admin\_Init::get_instance();
-		
+
 		$this->setup = Setup\_Init::get_instance();
 		$this->integrations = Integrations\_Init::get_instance();
 	}
-	
+
 	protected function actions() {
 		add_action( 'wp_body_open', [ $this, 'load_notification_bars' ] );
 	}
-	
+
 	/**
 	 * Required Plugins notice
 	 *
 	 * @return void
 	 */
 	public function required_plugins() {
-		printf( '<div class="error"><p>%s</p></div>', __( 'Your system does not meet the requirements for Church Plugins - Live', 'cp-notification-bars' ) );
+		printf( '<div class="error"><p>%s</p></div>', __( 'Your system does not meet the requirements for CP Notification Bar', 'cp-notification-bars' ) );
 	}
 
 	/** Helper Methods **************************************/
 
 	public function load_notification_bars() {
-		$args = apply_filters( 'cp_notification_bars_args', [
-			'post_type' => $this->setup->post_types->notification_bars->post_type,
-			'posts_per_page' => 1
-		] );
-		
-		
-		$bars = get_posts( $args );
-		
-		if ( empty( $bars ) ) {
+		$bar = \CPNB\Models\NotificationBar::get_active();
+
+		if ( ! $bar ) {
 			return;
 		}
-		
-		$bar = $bars[0];
 
-		$has_button = false;
-		$text   = get_post_meta( $bar->ID, 'text', true );
-		$url    = get_post_meta( $bar->ID, 'url', true );
-		if ( $button = get_post_meta( $bar->ID, 'button_text', true ) ) {
-			$has_button = true;
-		}
-		
 		?>
-		<div class="cp-notification-bar cp-color-primary <?php echo ! $has_button ? 'cp-clickable' : ''; ?>" <?php echo ! $has_button ? 'onclick="window.location.href = \'' . $url . '\'"' : ''; ?>>
+		<div class="cp-notification-bar cp-color-primary <?php echo $bar->is_clickable() ? 'cp-clickable' : ''; ?>" <?php echo $bar->is_clickable() ? 'onclick="window.location.href = \'' . $bar->get_url() . '\'"' : ''; ?>>
 			<div class="cp-notification-bar--content">
-				<div class="cp-notification-bar--text"><?php echo wp_kses_post( $text ); ?></div>
-				
-				<?php if ( $has_button ) : ?>
-					<div class="cp-notification-bar--button"><a class="cp-button" href="<?php echo esc_url( $url ); ?>"><span><?php echo wp_kses_post( $button ); ?></span></a></div>
+				<div class="cp-notification-bar--text"><?php echo wp_kses_post( $bar->get_text() ); ?></div>
+
+				<?php if ( $bar->has_button() ) : ?>
+					<div class="cp-notification-bar--button">
+						<a class="cp-button cp-button--outlined is-small"
+						   <?php if ( ! $bar->is_local_action() ) { echo 'target="_blank"'; } ?>
+						   href="<?php echo esc_url( $bar->get_url() ); ?>">
+							<span><?php echo wp_kses_post( $bar->get_button_text() ); ?></span>
+						</a>
+					</div>
 				<?php endif; ?>
 			</div>
 		</div>
 		<?php
 	}
-	
+
 	/**
 	 * Make sure required plugins are active
 	 *

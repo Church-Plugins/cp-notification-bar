@@ -19,5 +19,11 @@ npm run build
 
 ### Change Log
 
+#### 1.0.1
+* Setup Models and Controllers
+* Add expiration functionality
+* Update notification bar meta
+* Include CP Button SCSS module
+
 #### 1.0.0
 * Initial release

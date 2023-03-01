@@ -4,16 +4,22 @@ namespace CPNB\Setup\PostTypes;
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use ChurchPlugins\Exception;
 use ChurchPlugins\Setup\PostTypes\PostType;
 
 /**
- * Setup for custom post type: Speaker
+ * Setup for custom post type: Notification Bar
  *
  * @author costmo
  * @since 1.0
  */
-class NotificationBars extends PostType {
-	
+class NotificationBar extends PostType {
+
+	/**
+	 * @var string
+	 */
+	public $expiration_action = 'cpnb_expire_bar';
+
 	/**
 	 * Child class constructor. Punts to the parent.
 	 *
@@ -31,12 +37,15 @@ class NotificationBars extends PostType {
 	public function add_actions() {
 		add_filter( 'enter_title_here', [ $this, 'add_title' ], 10, 2 );
 		add_filter( 'cp_location_taxonomy_types', [ $this, 'location_tax' ] );
+		add_action( 'save_post', [ $this, 'schedule_expiration' ], 500 );
+		add_action( $this->expiration_action, [ $this, 'expire_bar' ] );
+
 		parent::add_actions();
 	}
 
 	/**
-	 * Update title placeholder in edit page 
-	 * 
+	 * Update title placeholder in edit page
+	 *
 	 * @param $title
 	 * @param $post
 	 *
@@ -49,13 +58,13 @@ class NotificationBars extends PostType {
 		if ( get_post_type( $post ) != $this->post_type ) {
 			return $title;
 		}
-		
+
 		return __( 'Add label', 'cp-notification-bars' );
 	}
 
 	/**
 	 * Add Staff to locations taxonomy if it exists
-	 * 
+	 *
 	 * @param $types
 	 *
 	 * @return mixed
@@ -70,7 +79,7 @@ class NotificationBars extends PostType {
 
 	/**
 	 * Get the slug for this taxonomy
-	 * 
+	 *
 	 * @return false|mixed
 	 * @since  1.0.0
 	 *
@@ -80,10 +89,10 @@ class NotificationBars extends PostType {
 		if ( ! $type = get_post_type_object( $this->post_type ) ) {
 			return false;
 		}
-		
+
 		return $type->rewrite['slug'];
-	}	
-	
+	}
+
 	/**
 	 * Setup arguments for this CPT
 	 *
@@ -98,7 +107,7 @@ class NotificationBars extends PostType {
 
 		return $args;
 	}
-	
+
 	public function register_metaboxes() {
 		$this->meta_details();
 	}
@@ -117,7 +126,10 @@ class NotificationBars extends PostType {
 			'name' => __( 'Text', 'cp-notification-bars' ),
 			'desc' => __( 'The text to show on the notification bar.', 'cp-notification-bars' ),
 			'id'   => 'text',
-			'type' => 'text',
+			'type' => 'wysiwyg',
+			'options' => [
+				'textarea_rows' => 3
+			],
 		] );
 
 		$cmb->add_field( [
@@ -126,7 +138,7 @@ class NotificationBars extends PostType {
 			'id'   => 'url',
 			'type' => 'text_url',
 		] );
-		
+
 		$cmb->add_field( [
 			'name' => __( 'Button Text', 'cp-notification-bars' ),
 			'desc' => __( 'The text to show for the notification call to button. (Leave blank for no button)', 'cp-notification-bars' ),
@@ -134,8 +146,22 @@ class NotificationBars extends PostType {
 			'type' => 'text',
 		] );
 
+//		$cmb->add_field( [
+//			'name' => __( 'Button Icon', 'cp-notification-bars' ),
+//			'desc' => __( 'The icon to show on the button. (Leave blank for no icon)', 'cp-notification-bars' ),
+//			'id'   => 'button_icon',
+//			'type' => 'file',
+//		] );
+
+		$cmb->add_field( [
+			'name' => __( 'Expiration Date', 'cp-notification-bars' ),
+			'desc' => __( 'Select a date for the bar to be automatically deleted. (Leave blank for bar to persist)', 'cp-notification-bars' ),
+			'id'   => 'expiration_date',
+			'type' => 'text_datetime_timestamp',
+		] );
+
 	}
-	
+
 	protected function visibility_options() {
 		$cmb = new_cmb2_box( [
 			'id'           => 'notification_bar_visibility',
@@ -146,5 +172,41 @@ class NotificationBars extends PostType {
 			'show_names'   => true,
 		] );
 	}
-	
+
+	/**
+	 * Schedule the expiration of this bar if applicable
+	 *
+	 * @param $post_id
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function schedule_expiration( $post_id ) {
+		try {
+			$bar = new \CPNB\Controllers\NotificationBar( $post_id );
+			$bar->schedule_expiration();
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+	}
+
+	/**
+	 * Delete the provided notification bar
+	 *
+	 * @param $post_id
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function expire_bar( $post_id ) {
+		try {
+			$bar = new \CPNB\Controllers\NotificationBar( $post_id );
+			$bar->model->delete();
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+	}
+
 }

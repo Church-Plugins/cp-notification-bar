@@ -3,7 +3,7 @@
  * Plugin Name: CP Notification Bars
  * Plugin URL: https://churchplugins.com
  * Description: Easy and customizable notification bars.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Church Plugins
  * Author URI: https://churchplugins.com
  * Text Domain: cp-notification-bars
@@ -12,7 +12,7 @@
 
 if( !defined( 'CPNB_PLUGIN_VERSION' ) ) {
 	 define ( 'CPNB_PLUGIN_VERSION',
-	 	'1.0.0'
+	 	'1.0.1'
 	);
 }
 
