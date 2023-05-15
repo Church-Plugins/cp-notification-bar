@@ -98,6 +98,7 @@ module.exports = {
 		'includes/**',
 		'vendor/**',
 		'dist/**',
+		'includes/**',
 		'*.php',
 		'*.md',
 		'readme.txt',
